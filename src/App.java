@@ -11,12 +11,13 @@ import java.awt.event.MouseListener;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
-
 import javax.imageio.ImageIO;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JComboBox;
+import javax.swing.JCheckBox;
 
 class Bouton extends JButton implements MouseListener{
 	  private String name;
@@ -93,116 +94,285 @@ class Bouton extends JButton implements MouseListener{
 			}       
 		}
 
-class Panneau extends JPanel {
-	  private int posX = -50;
-	  private int posY = -50;
 
-	  public void paintComponent(Graphics g){
-		g.setColor(Color.white);
-        g.fillRect(0, 0, this.getWidth(), this.getHeight());
-		g.setColor(Color.red);
-	    g.setColor(Color.red);
-	    g.fillOval(posX, posY, 50, 50);
-	  }
 
-	  public int getPosX() {
-	    return posX;
-	  }
+ 
+class Panneau extends JPanel { 
+  private int posX = -50;
+  private int posY = -50;
+  private int drawSize = 50;
+  //Un booléen pour le mode morphing 
+  //Un autre pour savoir si la taille doit être réduite
+  private boolean morph = false, reduce = false;
+  private String forme = "ROND";
+  //Le compteur de rafraîchissements
+  private int increment = 0;
+  
+  public void paintComponent(Graphics g){
+    g.setColor(Color.white);
+    g.fillRect(0, 0, this.getWidth(), this.getHeight());
+    g.setColor(Color.red);
+    //Si le mode morphing est activé, on peint le morphing
+    if(this.morph)
+      drawMorph(g);
+    //Sinon, on peint le mode normal
+    else
+      draw(g);    
+  }
+ 
+  private void draw(Graphics g){
+    if(this.forme.equals("ROND")){
+      g.fillOval(posX, posY, 50, 50); 
+    }
+    if(this.forme.equals("CARRE")){
+      g.fillRect(posX, posY, 50, 50);
+    }
+    if(this.forme.equals("TRIANGLE")){       
+      int s1X = posX + 50/2;
+      int s1Y = posY;
+      int s2X = posX + 50;
+      int s2Y = posY + 50;
+      int s3X = posX;
+      int s3Y = posY + 50;      
+      int[] ptsX = {s1X, s2X, s3X};
+      int[] ptsY = {s1Y, s2Y, s3Y};      
+      g.fillPolygon(ptsX, ptsY, 3);
+    }
+    if(this.forme.equals("ETOILE")){      
+      int s1X = posX + 50/2;
+      int s1Y = posY;
+      int s2X = posX + 50;
+      int s2Y = posY + 50;        
+      g.drawLine(s1X, s1Y, s2X, s2Y);      
+      int s3X = posX;
+      int s3Y = posY + 50/3;
+      g.drawLine(s2X, s2Y, s3X, s3Y);      
+      int s4X = posX + 50;
+      int s4Y = posY + 50/3;
+      g.drawLine(s3X, s3Y, s4X, s4Y);                   
+      int s5X = posX;
+      int s5Y = posY + 50;
+      g.drawLine(s4X, s4Y, s5X, s5Y);       
+      g.drawLine(s5X, s5Y, s1X, s1Y);  
+    }    
+  }
+  
+  //Méthode qui peint le morphing
+  private void drawMorph(Graphics g){
+    //On incrémente
+    increment++;
+    //On regarde si on doit réduire ou non
+    if(drawSize >= 50) reduce = true;
+    if(drawSize <= 10) reduce = false;    
+    if(reduce)
+      drawSize = drawSize - getUsedSize();
+    else
+      drawSize = drawSize + getUsedSize();
+    
+    if(this.forme.equals("ROND")){
+      g.fillOval(posX, posY, drawSize, drawSize); 
+    }
+    if(this.forme.equals("CARRE")){
+      g.fillRect(posX, posY, drawSize, drawSize);
+    }
+    if(this.forme.equals("TRIANGLE")){        
+      int s1X = posX + drawSize/2;
+      int s1Y = posY;
+      int s2X = posX + drawSize;
+      int s2Y = posY + drawSize;
+      int s3X = posX;
+      int s3Y = posY + drawSize;      
+      int[] ptsX = {s1X, s2X, s3X};
+      int[] ptsY = {s1Y, s2Y, s3Y};      
+      g.fillPolygon(ptsX, ptsY, 3);
+    }
+    if(this.forme.equals("ETOILE")){      
+      int s1X = posX + drawSize/2;
+      int s1Y = posY;
+      int s2X = posX + drawSize;
+      int s2Y = posY + drawSize;      
+      g.drawLine(s1X, s1Y, s2X, s2Y);      
+      int s3X = posX;
+      int s3Y = posY + drawSize/3;
+      g.drawLine(s2X, s2Y, s3X, s3Y);      
+      int s4X = posX + drawSize;
+      int s4Y = posY + drawSize/3;
+      g.drawLine(s3X, s3Y, s4X, s4Y);                   
+      int s5X = posX;
+      int s5Y = posY + drawSize;
+      g.drawLine(s4X, s4Y, s5X, s5Y);       
+      g.drawLine(s5X, s5Y, s1X, s1Y);  
+    }    
+  }
+  
+  //Retourne le nombre à retrancher ou à ajouter pour le morphing
+  private int getUsedSize(){
+    int res = 0;
+    //Si le nombre de tours est de dix, on réinitialise l'incrément et on retourne 1
+    if(increment / 10 == 1){
+      increment = 0;
+      res = 1;
+    }    
+    return res;
+  }
+  
+  public int getDrawSize(){
+    return drawSize;
+  }
+  
+  public boolean isMorph(){
+    return morph;
+  }
+  
+  public void setMorph(boolean bool){
+    this.morph = bool;
+    //On réinitialise la taille
+    drawSize = 50;
+  }
+  
+  public void setForme(String form){
+    this.forme = form;
+  }
+  
+  public int getPosX() {
+    return posX;
+  }
+ 
+  public void setPosX(int posX) {
+    this.posX = posX;
+  }
+ 
+  public int getPosY() {
+    return posY;
+  }
+ 
+  public void setPosY(int posY) {
+    this.posY = posY;
+  }
+}
 
-	  public void setPosX(int posX) {
-	    this.posX = posX;
-	  }
 
-	  public int getPosY() {
-	    return posY;
-	  }
 
-	  public void setPosY(int posY) {
-	    this.posY = posY;
-	  }        
-	}
-
+ 
 class Fenetre extends JFrame{
 
-	  private Panneau pan = new Panneau();
-	  private JButton bouton = new JButton("Go");
-	  private JButton bouton2 = new JButton("Stop");
-	  private JPanel container = new JPanel();
-	  private JLabel label = new JLabel("Le JLabel");
-	  private int compteur = 0;
-	  private boolean animated = true;
-	  private boolean backX, backY;
-	  private int x, y;
+  private Panneau pan = new Panneau();
+  private JButton bouton = new JButton("Go");
+  private JButton bouton2 = new JButton("Stop");
+  private JPanel container = new JPanel();
+  private JLabel label = new JLabel("Choix de la forme");
+  private int compteur = 0;
+  private boolean animated = true;
+  private boolean backX, backY;
+  private int x, y;
+  private Thread t;
+  private JComboBox combo = new JComboBox();
+  
+  private JCheckBox morph = new JCheckBox("Morphing");
+  
+  public Fenetre(){
+    this.setTitle("Animation");
+    this.setSize(300, 300);
+    this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    this.setLocationRelativeTo(null); 
+    container.setBackground(Color.white);
+    container.setLayout(new BorderLayout());
+    container.add(pan, BorderLayout.CENTER);    
+    bouton.addActionListener(new BoutonListener());     
+    bouton2.addActionListener(new Bouton2Listener());
+    bouton2.setEnabled(false);    
+    JPanel south = new JPanel();
+    south.add(bouton);
+    south.add(bouton2);
+    container.add(south, BorderLayout.SOUTH);    
+    combo.addItem("ROND");
+    combo.addItem("CARRE");
+    combo.addItem("TRIANGLE");
+    combo.addItem("ETOILE");    
+    combo.addActionListener(new FormeListener());    
+    morph.addActionListener(new MorphListener());
+     
+    JPanel top = new JPanel();
+    top.add(label);
+    top.add(combo);
+    top.add(morph);    
+    container.add(top, BorderLayout.NORTH);
+    this.setContentPane(container);
+    this.setVisible(true);         
+  }
+      
+  private void go(){
+    x = pan.getPosX();
+    y = pan.getPosY();
+    while(this.animated){
+    
+    //Si le mode morphing est activé, on utilise la taille actuelle de la forme
+      if(pan.isMorph()){
+        if(x < 1)backX = false;
+        if(x > pan.getWidth() - pan.getDrawSize()) backX = true;   
+        if(y < 1)backY = false;
+        if(y > pan.getHeight() - pan.getDrawSize()) backY = true;
+      }
+    //Sinon, on fait comme d'habitude
+      else{
+        if(x < 1)backX = false;
+        if(x > pan.getWidth()-50) backX = true;    
+        if(y < 1)backY = false;
+        if(y > pan.getHeight()-50) backY = true;
+      }  
 
-	  public Fenetre(){
-	    this.setTitle("Animation");
-	    this.setSize(300, 300);
-	    this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-	    this.setLocationRelativeTo(null);
+      if(!backX) pan.setPosX(++x);
+      else pan.setPosX(--x);
+      if(!backY) pan.setPosY(++y);
+      else pan.setPosY(--y);
+      pan.repaint();
+      try {
+        Thread.sleep(3);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }    
+  }
 
-	    container.setBackground(Color.white);
-	    container.setLayout(new BorderLayout());
-	    container.add(pan, BorderLayout.CENTER);
-	    bouton.addActionListener(new BoutonListener()); 
-	    bouton.setEnabled(false);
-	    bouton2.addActionListener(new Bouton2Listener());
-
-	    JPanel south = new JPanel();
-	    south.add(bouton);
-	    south.add(bouton2);
-	    container.add(south, BorderLayout.SOUTH);
-	    Font police = new Font("Tahoma", Font.BOLD, 16);
-	    label.setFont(police);
-	    label.setForeground(Color.blue);
-	    label.setHorizontalAlignment(JLabel.CENTER);
-	    container.add(label, BorderLayout.NORTH);
-	    this.setContentPane(container);
-	    this.setVisible(true);
-	    go();
-	  }
-
-	  private void go(){
-	    //Les coordonnées de départ de notre rond
-	    x = pan.getPosX();
-	    y = pan.getPosY();
-	    //Dans cet exemple, j'utilise une boucle while
-	    //Vous verrez qu'elle fonctionne très bien
-	    while(this.animated){
-	      if(x < 1)backX = false;
-	      if(x > pan.getWidth()-50)backX = true;          
-	      if(y < 1)backY = false;
-	      if(y > pan.getHeight()-50)backY = true;
-	      if(!backX)pan.setPosX(++x);
-	      else pan.setPosX(--x);
-	      if(!backY) pan.setPosY(++y);
-	      else pan.setPosY(--y);
-	      pan.repaint();
-
-	      try {
-	        Thread.sleep(3);
-	      } catch (InterruptedException e) {
-	        e.printStackTrace();
-	      }
-	    }     
-	  }
-
-	  class BoutonListener implements ActionListener{
-	    public void actionPerformed(ActionEvent arg0) {
-	      animated = true;
-	      bouton.setEnabled(false);
-	      bouton2.setEnabled(true);
-	      go();
-	    }
-	  }
-
-	  class Bouton2Listener implements ActionListener{
-	     public void actionPerformed(ActionEvent e) {
-	      animated = false;     
-	      bouton.setEnabled(true);
-	      bouton2.setEnabled(false);
-	    }
-	  }     
-	}
+  public class BoutonListener implements ActionListener{
+    public void actionPerformed(ActionEvent arg0) {
+      animated = true;
+      t = new Thread(new PlayAnimation());
+      t.start();
+      bouton.setEnabled(false);
+      bouton2.setEnabled(true);       
+    }    
+  }
+    
+  class Bouton2Listener implements ActionListener{
+    public void actionPerformed(ActionEvent e) {
+      animated = false;    
+      bouton.setEnabled(true);
+      bouton2.setEnabled(false);
+    }    
+  }    
+    
+  class PlayAnimation implements Runnable{
+    public void run() {
+      go();      
+    }    
+  }
+    
+  class FormeListener implements ActionListener{
+    public void actionPerformed(ActionEvent e) {
+      pan.setForme(combo.getSelectedItem().toString());
+    }    
+  }
+    
+  class MorphListener implements ActionListener{
+    public void actionPerformed(ActionEvent e) {
+      //Si la case est cochée, on active le mode morphing
+      if(morph.isSelected())pan.setMorph(true);
+      //Sinon, on ne fait rien
+      else pan.setMorph(false);
+    }
+  }    
+}
 
 public class App {
   public static void main(String[] args){
