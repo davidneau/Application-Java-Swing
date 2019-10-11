@@ -1,6 +1,5 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -18,6 +17,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JComboBox;
 import javax.swing.JCheckBox;
+import javax.swing.JOptionPane;
 
 class Bouton extends JButton implements MouseListener{
 	  private String name;
@@ -256,19 +256,19 @@ class Panneau extends JPanel {
  
 class Fenetre extends JFrame{
 
-  private Panneau pan = new Panneau();
-  private JButton bouton = new JButton("Go");
-  private JButton bouton2 = new JButton("Stop");
-  private JPanel container = new JPanel();
-  private JLabel label = new JLabel("Choix de la forme");
-  private int compteur = 0;
-  private boolean animated = true;
-  private boolean backX, backY;
-  private int x, y;
-  private Thread t;
-  private JComboBox combo = new JComboBox();
-  
-  private JCheckBox morph = new JCheckBox("Morphing");
+	private Panneau pan = new Panneau();
+	private JButton bouton = new JButton("Go");
+	private JButton bouton2 = new JButton("Stop");
+	private JPanel container = new JPanel();
+	private JLabel label = new JLabel("Choix de la forme");
+	private int compteur = 0;
+	private boolean animated = true;
+	private boolean backX, backY;
+	private int x,y ;
+	private Thread t;
+	private JComboBox combo = new JComboBox();
+	  
+	private JCheckBox morph = new JCheckBox("Morphing");
   
   public Fenetre(){
     this.setTitle("Animation");
@@ -335,28 +335,48 @@ class Fenetre extends JFrame{
   }
 
   public class BoutonListener implements ActionListener{
-    public void actionPerformed(ActionEvent arg0) {
-      animated = true;
-      t = new Thread(new PlayAnimation());
-      t.start();
-      bouton.setEnabled(false);
-      bouton2.setEnabled(true);       
-    }    
-  }
-    
-  class Bouton2Listener implements ActionListener{
-    public void actionPerformed(ActionEvent e) {
-      animated = false;    
-      bouton.setEnabled(true);
-      bouton2.setEnabled(false);
-    }    
-  }    
-    
-  class PlayAnimation implements Runnable{
-    public void run() {
-      go();      
-    }    
-  }
+	    public void actionPerformed(ActionEvent arg0) {    	
+	      JOptionPane jop = new JOptionPane();    	
+	      int option = jop.showConfirmDialog(null, 
+	        "Voulez-vous lancer l'animation ?", 
+	        "Lancement de l'animation", 
+	        JOptionPane.YES_NO_OPTION, 
+	        JOptionPane.QUESTION_MESSAGE);
+
+	      if(option == JOptionPane.OK_OPTION){
+	        animated = true;
+	        t = new Thread(new PlayAnimation());
+	        t.start();
+	        bouton.setEnabled(false);
+	        bouton2.setEnabled(true);    	
+	      }
+	    }    
+	  }
+
+	  class Bouton2Listener  implements ActionListener{
+	    public void actionPerformed(ActionEvent e) {
+	      JOptionPane jop = new JOptionPane();    	
+	      int option = jop.showConfirmDialog(null, 
+	        "Voulez-vous arrêter l'animation ?",
+	        "Arrêt de l'animation", 
+	        JOptionPane.YES_NO_CANCEL_OPTION, 
+	        JOptionPane.QUESTION_MESSAGE);
+
+	      if(option != JOptionPane.NO_OPTION && 
+	      option != JOptionPane.CANCEL_OPTION && 
+	      option != JOptionPane.CLOSED_OPTION){
+	        animated = false;	
+	        bouton.setEnabled(true);
+	        bouton2.setEnabled(false);
+	      }
+	    }    
+	  }	
+
+	  class PlayAnimation implements Runnable{
+	    public void run() {
+	      go();    	
+	    }    
+	  }
     
   class FormeListener implements ActionListener{
     public void actionPerformed(ActionEvent e) {
