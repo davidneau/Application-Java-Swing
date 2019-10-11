@@ -5,6 +5,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.ActionEvent;
@@ -24,72 +26,10 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JRadioButtonMenuItem;
+import javax.swing.KeyStroke;
+import javax.swing.JPopupMenu;
 
-class ZFenetre extends JFrame {
-  private JMenuBar menuBar = new JMenuBar();
-  private JMenu test1 = new JMenu("Fichier");
-  private JMenu test1_2 = new JMenu("Sous ficher");
-  private JMenu test2 = new JMenu("Edition");
 
-  private JMenuItem item1 = new JMenuItem("Ouvrir");
-  private JMenuItem item2 = new JMenuItem("Fermer");
-  private JMenuItem item3 = new JMenuItem("Lancer");
-  private JMenuItem item4 = new JMenuItem("Arrêter");
-
-  private JCheckBoxMenuItem jcmi1 = new JCheckBoxMenuItem("Choix 1");
-  private JCheckBoxMenuItem jcmi2 = new JCheckBoxMenuItem("Choix 2");
-
-  private JRadioButtonMenuItem jrmi1 = new JRadioButtonMenuItem("Radio 1");
-  private JRadioButtonMenuItem jrmi2 = new JRadioButtonMenuItem("Radio 2");
-
-  public static void main(String[] args){
-    ZFenetre zFen = new ZFenetre();
-  }
-
-  public ZFenetre(){
-    this.setSize(400, 200);
-    this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    this.setLocationRelativeTo(null);
-
-    //On initialise nos menus      
-    this.test1.add(item1);
-
-    //On ajoute les éléments dans notre sous-menu
-    this.test1_2.add(jcmi1);
-    this.test1_2.add(jcmi2);
-    //Ajout d'un séparateur
-    this.test1_2.addSeparator();
-    //On met nos radios dans un ButtonGroup
-    ButtonGroup bg = new ButtonGroup();
-    bg.add(jrmi1);
-    bg.add(jrmi1);
-    //On présélectionne la première radio
-    jrmi1.setSelected(true);
-
-    this.test1_2.add(jrmi1);
-    this.test1_2.add(jrmi2);
-
-    //Ajout du sous-menu dans notre menu
-    this.test1.add(this.test1_2);
-    //Ajout d'un séparateur
-    this.test1.addSeparator();
-    item2.addActionListener(new ActionListener(){
-      public void actionPerformed(ActionEvent arg0) {
-        System.exit(0);
-      }        
-    });
-    this.test1.add(item2);  
-    this.test2.add(item3);
-    this.test2.add(item4);
-
-    //L'ordre d'ajout va déterminer l'ordre d'apparition dans le menu de gauche à droite
-    //Le premier ajouté sera tout à gauche de la barre de menu et inversement pour le dernier
-    this.menuBar.add(test1);
-    this.menuBar.add(test2);
-    this.setJMenuBar(menuBar);
-    this.setVisible(true);
-  }
-}
 class Bouton extends JButton implements MouseListener{
 	  private String name;
 	  private Image img;
@@ -168,7 +108,7 @@ class Bouton extends JButton implements MouseListener{
 
 
  
-class Panneau extends JPanel { 
+class Panneau extends JPanel {
   private int posX = -50;
   private int posY = -50;
   private int drawSize = 50;
@@ -179,16 +119,34 @@ class Panneau extends JPanel {
   //Le compteur de rafraîchissements
   private int increment = 0;
   
+  //Les variables définies auparavant ne changent pas
+  //On y ajoute nos deux couleurs
+  private Color couleurForme = Color.red;
+  private Color couleurFond = Color.white;
+
   public void paintComponent(Graphics g){
-    g.setColor(Color.white);
+    //Affectation de la couleur de fond   
+    g.setColor(couleurFond);
     g.fillRect(0, 0, this.getWidth(), this.getHeight());
-    g.setColor(Color.red);
+
+    //Affectation de la couleur de la forme
+    g.setColor(couleurForme);
     //Si le mode morphing est activé, on peint le morphing
     if(this.morph)
       drawMorph(g);
-    //Sinon, on peint le mode normal
+    //Sinon, mode normal
     else
-      draw(g);    
+      draw(g);
+  }
+
+  //Méthode qui redéfinit la couleur du fond
+  public void setCouleurFond(Color color){
+    this.couleurFond = color;
+  }
+
+  //Méthode qui redéfinit la couleur de la forme
+  public void setCouleurForme(Color color){
+    this.couleurForme = color;
   }
  
   private void draw(Graphics g){
@@ -336,7 +294,7 @@ class Fenetre extends JFrame{
 	  private Thread t;
 
 	  private JMenuBar menuBar = new JMenuBar();
-
+	  
 	  private JMenu animation = new JMenu("Animation"),
 	    forme = new JMenu("Forme"),
 	    typeForme = new JMenu("Type de forme"),
@@ -354,47 +312,126 @@ class Fenetre extends JFrame{
 	    etoile = new JRadioButtonMenuItem("Etoile");
 
 	  private ButtonGroup bg = new ButtonGroup();
+	  
+	  //La déclaration pour le menu contextuel 
+	  private JPopupMenu jpm = new JPopupMenu();
+	  private JMenu background = new JMenu("Couleur de fond");
+	  private JMenu couleur = new JMenu("Couleur de la forme");
 
+	  private JMenuItem launch = new JMenuItem("Lancer l'animation");      
+	  private JMenuItem stop = new JMenuItem("Arrêter l'animation");
+	  private JMenuItem  rouge = new JMenuItem("Rouge"),
+	    bleu = new JMenuItem("Bleu"),
+	    vert = new JMenuItem("Vert"),
+	    blanc = new JMenuItem("Blanc"),
+	    rougeBack = new JMenuItem("Rouge"),
+	    bleuBack = new JMenuItem("Bleu"),
+	    vertBack = new JMenuItem("Vert"),
+	    blancBack = new JMenuItem("Blanc");
+
+	  //On crée des listeners globaux
+	  private StopAnimationListener stopAnimation=new StopAnimationListener();
+	  private StartAnimationListener startAnimation=new StartAnimationListener();
+	  
+	  //Avec des listeners pour les couleurs
+	  private CouleurFondListener bgColor = new CouleurFondListener();
+	  private CouleurFormeListener frmColor = new CouleurFormeListener();
+	  
+	  
+	  
 	  public Fenetre(){
-	    this.setTitle("Animation");
-	    this.setSize(300, 300);
-	    this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-	    this.setLocationRelativeTo(null);
+		    this.setTitle("Animation");
+		    this.setSize(300, 300);
+		    this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		    this.setLocationRelativeTo(null);
 
-	    container.setBackground(Color.white);
-	    container.setLayout(new BorderLayout());
-	    container.add(pan, BorderLayout.CENTER);
+		    container.setBackground(Color.white);
+		    container.setLayout(new BorderLayout());
 
-	    this.setContentPane(container);
-	    this.initMenu();
-	    this.setVisible(true);            
-	  }
+		    //On initialise le menu stop
+		    stop.setEnabled(false);
+		    //On affecte les écouteurs
+		    stop.addActionListener(stopAnimation);
+		    launch.addActionListener(startAnimation);
+		    
+		    //On affecte les écouteurs aux points de menu
+		    rouge.addActionListener(frmColor);
+		    bleu.addActionListener(frmColor);
+		    vert.addActionListener(frmColor);
+		    blanc.addActionListener(frmColor);
 
-	  private void initMenu(){
-		    //Menu Animation    
-		    //Ajout du listener pour lancer l'animation
-		    lancer.addActionListener(new StartAnimationListener());
-		    animation.add(lancer);
+		    rougeBack.addActionListener(bgColor);
+		    bleuBack.addActionListener(bgColor);
+		    vertBack.addActionListener(bgColor);
+		    blancBack.addActionListener(bgColor);
+		    
+		    //On crée et on passe l'écouteur pour afficher le menu contextuel
+		    //Création d'une implémentation de MouseAdapter
+		    //avec redéfinition de la méthode adéquate
+		    pan.addMouseListener(new MouseAdapter(){
+		      public void mouseReleased(MouseEvent event){
+		        //Seulement s'il s'agit d'un clic droit
+		        //if(event.getButton() == MouseEvent.BUTTON3)
+		        if(event.isPopupTrigger()){ 
+		          background.add(blancBack);
+		          background.add(rougeBack);
+		          background.add(bleuBack);
+		          background.add(vertBack);
 
-		    //Ajout du listener pour arrêter l'animation
-		    arreter.addActionListener(new StopAnimationListener());
-		    arreter.setEnabled(false);
-		    animation.add(arreter);
+		          couleur.add(blanc);
+		          couleur.add(rouge);
+		          couleur.add(bleu);
+		          couleur.add(vert);
 
-		    animation.addSeparator();
-		    quitter.addActionListener(new ActionListener(){
-		      public void actionPerformed(ActionEvent event){
-		        System.exit(0);
+		          jpm.add(launch);
+		          jpm.add(stop);
+		          jpm.add(couleur);
+		          jpm.add(background);
+		          //La méthode qui va afficher le menu
+		          jpm.show(pan, event.getX(), event.getY());
+		        }
 		      }
 		    });
-		    animation.add(quitter);
+		    
+		    container.add(pan, BorderLayout.CENTER);
+		    this.setContentPane(container);
+		    this.initMenu();
+		    this.setVisible(true);    
+
+		  }
+
+
+	  private void initMenu(){
+		//Ajout du listener pour lancer l'animation
+		//ATTENTION, LE LISTENER EST GLOBAL !!! 
+		lancer.addActionListener(startAnimation);
+		//On attribue l'accélerateur c
+		lancer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, KeyEvent.CTRL_DOWN_MASK));
+		animation.add(lancer);
+	
+		//Ajout du listener pour arrêter l'animation
+		//LISTENER A CHANGER ICI AUSSI
+		arreter.addActionListener(stopAnimation);
+		arreter.setEnabled(false);
+		arreter.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, KeyEvent.CTRL_DOWN_MASK + KeyEvent.SHIFT_DOWN_MASK));
+		animation.add(arreter);
+		lancer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, KeyEvent.CTRL_DOWN_MASK));
+		animation.add(lancer);
+	
+		animation.addSeparator();
+		quitter.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent event){
+				System.exit(0);
+			}
+		});
+		animation.add(quitter);
 
 	    //Menu forme    
 	    bg.add(carre);
 	    bg.add(triangle);
 	    bg.add(rond);
 	    bg.add(etoile);
-	  //On crée un nouvel écouteur, inutile de créer 4 instances différentes
+	    //On crée un nouvel écouteur, inutile de créer 4 instances différentes
 	    FormeListener fl = new FormeListener();
 	    carre.addActionListener(fl);
 	    rond.addActionListener(fl);
@@ -436,7 +473,17 @@ class Fenetre extends JFrame{
 	    menuBar.add(animation);
 	    menuBar.add(forme);
 	    menuBar.add(aPropos);
+	    
+	    //Ajout des menus dans la barre de menus et ajout de mnémoniques !
+	    animation.setMnemonic('A');
+	    menuBar.add(animation);
 
+	    forme.setMnemonic('F');
+	    menuBar.add(forme);
+
+	    aPropos.setMnemonic('P');
+	    menuBar.add(aPropos); 
+	    
 	    //Ajout de la barre de menus sur la fenêtre
 	    this.setJMenuBar(menuBar);
 	  }
@@ -488,24 +535,43 @@ class Fenetre extends JFrame{
 		        lancer.setEnabled(false);
 		        arreter.setEnabled(true);
 
+		        //On ajoute l'instruction pour le menu contextuel
+		        launch.setEnabled(false);
+		        stop.setEnabled(true);
+
 		        animated = true;
 		        t = new Thread(new PlayAnimation());
 		        t.start();     
 		      }
-		    }
-	  }
-	  /**
-	   * Écouteur du menu Quitter
-	   * @author CHerby
-	   */
-	  class StopAnimationListener  implements ActionListener{
-		  public void actionPerformed(ActionEvent e) {      
-			  animated = false;
-			  lancer.setEnabled(true);
-		      arreter.setEnabled(false);
-		  }    
-	  	}  
+		    }    
+		  }
 
+		  /**
+		  * Écouteur du menu Quitter
+		  * @author CHerby
+		  */
+		  class StopAnimationListener  implements ActionListener{
+
+		    public void actionPerformed(ActionEvent e) {
+		      JOptionPane jop = new JOptionPane();     
+		      int option = jop.showConfirmDialog(null, 
+		        "Voulez-vous arrêter l'animation ?",
+		        "Arrêt de l'animation", 
+		        JOptionPane.YES_NO_CANCEL_OPTION, 
+		        JOptionPane.QUESTION_MESSAGE);
+
+		      if(option != JOptionPane.NO_OPTION && option != JOptionPane.CANCEL_OPTION && option != JOptionPane.CLOSED_OPTION){
+		        animated = false;
+		        //On remplace nos boutons par nos JMenuItem
+		        lancer.setEnabled(true);
+		        arreter.setEnabled(false);
+
+		        //On ajoute l'instruction pour le menu contextuel
+		        launch.setEnabled(true);
+		        stop.setEnabled(false);
+		      }
+		    }    
+		  }  
 	  class PlayAnimation implements Runnable{
 	    public void run() {
 	      go();      
@@ -534,7 +600,37 @@ class Fenetre extends JFrame{
 	      //Sinon rien !
 	      else pan.setMorph(false);
 	    }    
-	  }  
+	  }
+	  
+	  //Écoute le changement de couleur du fond
+	  class CouleurFondListener implements ActionListener{
+	    public void actionPerformed(ActionEvent e) {
+
+	      if(e.getSource() == vertBack)
+	        pan.setCouleurFond(Color.green);
+	      else if (e.getSource() == bleuBack)
+	        pan.setCouleurFond(Color.blue);
+	      else if(e.getSource() == rougeBack)
+	        pan.setCouleurFond(Color.red);
+	      else
+	        pan.setCouleurFond(Color.white);
+	    }
+	  }
+
+	  //Écoute le changement de couleur du fond
+	  class CouleurFormeListener implements ActionListener{
+	    public void actionPerformed(ActionEvent e) {
+	      if(e.getSource() == vert)
+	        pan.setCouleurForme(Color.green);
+	      else if (e.getSource() == bleu)
+	        pan.setCouleurForme(Color.blue);
+	      else if(e.getSource() == rouge)
+	        pan.setCouleurForme(Color.red);
+	      else
+	        pan.setCouleurForme(Color.white);
+	    }
+	  }	
+	  
 	} 
 	
 
