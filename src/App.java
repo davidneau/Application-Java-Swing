@@ -18,7 +18,78 @@ import javax.swing.JPanel;
 import javax.swing.JComboBox;
 import javax.swing.JCheckBox;
 import javax.swing.JOptionPane;
+import javax.swing.ButtonGroup;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JRadioButtonMenuItem;
 
+class ZFenetre extends JFrame {
+  private JMenuBar menuBar = new JMenuBar();
+  private JMenu test1 = new JMenu("Fichier");
+  private JMenu test1_2 = new JMenu("Sous ficher");
+  private JMenu test2 = new JMenu("Edition");
+
+  private JMenuItem item1 = new JMenuItem("Ouvrir");
+  private JMenuItem item2 = new JMenuItem("Fermer");
+  private JMenuItem item3 = new JMenuItem("Lancer");
+  private JMenuItem item4 = new JMenuItem("Arrêter");
+
+  private JCheckBoxMenuItem jcmi1 = new JCheckBoxMenuItem("Choix 1");
+  private JCheckBoxMenuItem jcmi2 = new JCheckBoxMenuItem("Choix 2");
+
+  private JRadioButtonMenuItem jrmi1 = new JRadioButtonMenuItem("Radio 1");
+  private JRadioButtonMenuItem jrmi2 = new JRadioButtonMenuItem("Radio 2");
+
+  public static void main(String[] args){
+    ZFenetre zFen = new ZFenetre();
+  }
+
+  public ZFenetre(){
+    this.setSize(400, 200);
+    this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    this.setLocationRelativeTo(null);
+
+    //On initialise nos menus      
+    this.test1.add(item1);
+
+    //On ajoute les éléments dans notre sous-menu
+    this.test1_2.add(jcmi1);
+    this.test1_2.add(jcmi2);
+    //Ajout d'un séparateur
+    this.test1_2.addSeparator();
+    //On met nos radios dans un ButtonGroup
+    ButtonGroup bg = new ButtonGroup();
+    bg.add(jrmi1);
+    bg.add(jrmi1);
+    //On présélectionne la première radio
+    jrmi1.setSelected(true);
+
+    this.test1_2.add(jrmi1);
+    this.test1_2.add(jrmi2);
+
+    //Ajout du sous-menu dans notre menu
+    this.test1.add(this.test1_2);
+    //Ajout d'un séparateur
+    this.test1.addSeparator();
+    item2.addActionListener(new ActionListener(){
+      public void actionPerformed(ActionEvent arg0) {
+        System.exit(0);
+      }        
+    });
+    this.test1.add(item2);  
+    this.test2.add(item3);
+    this.test2.add(item4);
+
+    //L'ordre d'ajout va déterminer l'ordre d'apparition dans le menu de gauche à droite
+    //Le premier ajouté sera tout à gauche de la barre de menu et inversement pour le dernier
+    this.menuBar.add(test1);
+    this.menuBar.add(test2);
+    this.setJMenuBar(menuBar);
+    this.setVisible(true);
+  }
+}
 class Bouton extends JButton implements MouseListener{
 	  private String name;
 	  private Image img;
@@ -124,7 +195,8 @@ class Panneau extends JPanel {
     if(this.forme.equals("ROND")){
       g.fillOval(posX, posY, 50, 50); 
     }
-    if(this.forme.equals("CARRE")){
+  //J'ai ajouté :  || this.forme.equals("CARRÉ")
+    if(this.forme.equals("CARRE") || this.forme.equals("CARRÉ")){
       g.fillRect(posX, posY, 50, 50);
     }
     if(this.forme.equals("TRIANGLE")){       
@@ -230,9 +302,9 @@ class Panneau extends JPanel {
     drawSize = 50;
   }
   
-  public void setForme(String form){
-    this.forme = form;
-  }
+  public void setForme(String form){     	
+	  this.forme = form.toUpperCase();
+	}
   
   public int getPosX() {
     return posX;
@@ -255,144 +327,216 @@ class Panneau extends JPanel {
 
  
 class Fenetre extends JFrame{
+	  private Panneau pan = new Panneau();
+	  private JPanel container = new JPanel();
+	  private int compteur = 0;
+	  private boolean animated = true;
+	  private boolean backX, backY;
+	  private int x,y ;
+	  private Thread t;
 
-	private Panneau pan = new Panneau();
-	private JButton bouton = new JButton("Go");
-	private JButton bouton2 = new JButton("Stop");
-	private JPanel container = new JPanel();
-	private JLabel label = new JLabel("Choix de la forme");
-	private int compteur = 0;
-	private boolean animated = true;
-	private boolean backX, backY;
-	private int x,y ;
-	private Thread t;
-	private JComboBox combo = new JComboBox();
-	  
-	private JCheckBox morph = new JCheckBox("Morphing");
-  
-  public Fenetre(){
-    this.setTitle("Animation");
-    this.setSize(300, 300);
-    this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    this.setLocationRelativeTo(null); 
-    container.setBackground(Color.white);
-    container.setLayout(new BorderLayout());
-    container.add(pan, BorderLayout.CENTER);    
-    bouton.addActionListener(new BoutonListener());     
-    bouton2.addActionListener(new Bouton2Listener());
-    bouton2.setEnabled(false);    
-    JPanel south = new JPanel();
-    south.add(bouton);
-    south.add(bouton2);
-    container.add(south, BorderLayout.SOUTH);    
-    combo.addItem("ROND");
-    combo.addItem("CARRE");
-    combo.addItem("TRIANGLE");
-    combo.addItem("ETOILE");    
-    combo.addActionListener(new FormeListener());    
-    morph.addActionListener(new MorphListener());
-     
-    JPanel top = new JPanel();
-    top.add(label);
-    top.add(combo);
-    top.add(morph);    
-    container.add(top, BorderLayout.NORTH);
-    this.setContentPane(container);
-    this.setVisible(true);         
-  }
-      
-  private void go(){
-    x = pan.getPosX();
-    y = pan.getPosY();
-    while(this.animated){
-    
-    //Si le mode morphing est activé, on utilise la taille actuelle de la forme
-      if(pan.isMorph()){
-        if(x < 1)backX = false;
-        if(x > pan.getWidth() - pan.getDrawSize()) backX = true;   
-        if(y < 1)backY = false;
-        if(y > pan.getHeight() - pan.getDrawSize()) backY = true;
-      }
-    //Sinon, on fait comme d'habitude
-      else{
-        if(x < 1)backX = false;
-        if(x > pan.getWidth()-50) backX = true;    
-        if(y < 1)backY = false;
-        if(y > pan.getHeight()-50) backY = true;
-      }  
+	  private JMenuBar menuBar = new JMenuBar();
 
-      if(!backX) pan.setPosX(++x);
-      else pan.setPosX(--x);
-      if(!backY) pan.setPosY(++y);
-      else pan.setPosY(--y);
-      pan.repaint();
-      try {
-        Thread.sleep(3);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }    
-  }
+	  private JMenu animation = new JMenu("Animation"),
+	    forme = new JMenu("Forme"),
+	    typeForme = new JMenu("Type de forme"),
+	    aPropos = new JMenu("À propos");
 
-  public class BoutonListener implements ActionListener{
-	    public void actionPerformed(ActionEvent arg0) {    	
-	      JOptionPane jop = new JOptionPane();    	
-	      int option = jop.showConfirmDialog(null, 
-	        "Voulez-vous lancer l'animation ?", 
-	        "Lancement de l'animation", 
-	        JOptionPane.YES_NO_OPTION, 
-	        JOptionPane.QUESTION_MESSAGE);
+	  private JMenuItem lancer = new JMenuItem("Lancer l'animation"),
+	    arreter = new JMenuItem("Arrêter l'animation"),
+	    quitter = new JMenuItem("Quitter"),
+	    aProposItem = new JMenuItem("?");
 
-	      if(option == JOptionPane.OK_OPTION){
-	        animated = true;
-	        t = new Thread(new PlayAnimation());
-	        t.start();
-	        bouton.setEnabled(false);
-	        bouton2.setEnabled(true);    	
-	      }
-	    }    
+	  private JCheckBoxMenuItem morph = new JCheckBoxMenuItem("Morphing");
+	  private JRadioButtonMenuItem carre = new JRadioButtonMenuItem("Carré"),
+	    rond = new JRadioButtonMenuItem("Rond"),
+	    triangle = new JRadioButtonMenuItem("Triangle"),
+	    etoile = new JRadioButtonMenuItem("Etoile");
+
+	  private ButtonGroup bg = new ButtonGroup();
+
+	  public Fenetre(){
+	    this.setTitle("Animation");
+	    this.setSize(300, 300);
+	    this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	    this.setLocationRelativeTo(null);
+
+	    container.setBackground(Color.white);
+	    container.setLayout(new BorderLayout());
+	    container.add(pan, BorderLayout.CENTER);
+
+	    this.setContentPane(container);
+	    this.initMenu();
+	    this.setVisible(true);            
 	  }
 
-	  class Bouton2Listener  implements ActionListener{
-	    public void actionPerformed(ActionEvent e) {
-	      JOptionPane jop = new JOptionPane();    	
-	      int option = jop.showConfirmDialog(null, 
-	        "Voulez-vous arrêter l'animation ?",
-	        "Arrêt de l'animation", 
-	        JOptionPane.YES_NO_CANCEL_OPTION, 
-	        JOptionPane.QUESTION_MESSAGE);
+	  private void initMenu(){
+		    //Menu Animation    
+		    //Ajout du listener pour lancer l'animation
+		    lancer.addActionListener(new StartAnimationListener());
+		    animation.add(lancer);
 
-	      if(option != JOptionPane.NO_OPTION && 
-	      option != JOptionPane.CANCEL_OPTION && 
-	      option != JOptionPane.CLOSED_OPTION){
-	        animated = false;	
-	        bouton.setEnabled(true);
-	        bouton2.setEnabled(false);
-	      }
-	    }    
-	  }	
+		    //Ajout du listener pour arrêter l'animation
+		    arreter.addActionListener(new StopAnimationListener());
+		    arreter.setEnabled(false);
+		    animation.add(arreter);
+
+		    animation.addSeparator();
+		    quitter.addActionListener(new ActionListener(){
+		      public void actionPerformed(ActionEvent event){
+		        System.exit(0);
+		      }
+		    });
+		    animation.add(quitter);
+
+	    //Menu forme    
+	    bg.add(carre);
+	    bg.add(triangle);
+	    bg.add(rond);
+	    bg.add(etoile);
+	  //On crée un nouvel écouteur, inutile de créer 4 instances différentes
+	    FormeListener fl = new FormeListener();
+	    carre.addActionListener(fl);
+	    rond.addActionListener(fl);
+	    triangle.addActionListener(fl);
+	    etoile.addActionListener(fl);
+	    
+	    typeForme.add(rond);
+	    typeForme.add(carre);    
+	    typeForme.add(triangle);
+	    typeForme.add(etoile);
+
+	    rond.setSelected(true);
+
+	    forme.add(typeForme);
+	  //Ajout du listener pour le morphing
+	    morph.addActionListener(new MorphListener());
+	    forme.add(morph);
+
+	    //Menu À propos
+	    //Ajout du listener pour le morphing
+	    morph.addActionListener(new MorphListener());
+	    forme.add(morph);
+
+	    //Menu À propos
+
+	    //Ajout de ce que doit faire le "?"
+	    aProposItem.addActionListener(new ActionListener(){
+	      public void actionPerformed(ActionEvent arg0) {
+	        JOptionPane jop = new JOptionPane();      
+	        String mess = "Merci ! \n J'espère que vous vous amusez bien !\n";
+	        mess += "Je crois qu'il est temps d'ajouter des accélérateurs et des "+" mnémoniques dans tout ça…\n";
+	        mess += "\n Allez, GO les ZérOs !";        
+	        jop.showMessageDialog(null, mess, "À propos", JOptionPane.INFORMATION_MESSAGE);        
+	      }            
+	    });
+	    aPropos.add(aProposItem);
+
+	    //Ajout des menus dans la barre de menus
+	    menuBar.add(animation);
+	    menuBar.add(forme);
+	    menuBar.add(aPropos);
+
+	    //Ajout de la barre de menus sur la fenêtre
+	    this.setJMenuBar(menuBar);
+	  }
+
+	  private void go(){
+		    x = pan.getPosX();
+		    y = pan.getPosY();
+		    while(this.animated){
+		    
+		    //Si le mode morphing est activé, on utilise la taille actuelle de la forme
+		      if(pan.isMorph()){
+		        if(x < 1)backX = false;
+		        if(x > pan.getWidth() - pan.getDrawSize()) backX = true;   
+		        if(y < 1)backY = false;
+		        if(y > pan.getHeight() - pan.getDrawSize()) backY = true;
+		      }
+		    //Sinon, on fait comme d'habitude
+		      else{
+		        if(x < 1)backX = false;
+		        if(x > pan.getWidth()-50) backX = true;    
+		        if(y < 1)backY = false;
+		        if(y > pan.getHeight()-50) backY = true;
+		      }  
+
+		      if(!backX) pan.setPosX(++x);
+		      else pan.setPosX(--x);
+		      if(!backY) pan.setPosY(++y);
+		      else pan.setPosY(--y);
+		      pan.repaint();
+		      try {
+		        Thread.sleep(3);
+		      } catch (InterruptedException e) {
+		        e.printStackTrace();
+		      }
+		    }    
+		  }  
+	   
+		  
+	  public class StartAnimationListener implements ActionListener{
+		    public void actionPerformed(ActionEvent arg0) {
+		      JOptionPane jop = new JOptionPane();     
+		      int option = jop.showConfirmDialog(null, 
+		        "Voulez-vous lancer l'animation ?", 
+		        "Lancement de l'animation", 
+		        JOptionPane.YES_NO_OPTION, 
+		        JOptionPane.QUESTION_MESSAGE);
+
+		      if(option == JOptionPane.OK_OPTION){
+		        lancer.setEnabled(false);
+		        arreter.setEnabled(true);
+
+		        animated = true;
+		        t = new Thread(new PlayAnimation());
+		        t.start();     
+		      }
+		    }
+	  }
+	  /**
+	   * Écouteur du menu Quitter
+	   * @author CHerby
+	   */
+	  class StopAnimationListener  implements ActionListener{
+		  public void actionPerformed(ActionEvent e) {      
+			  animated = false;
+			  lancer.setEnabled(true);
+		      arreter.setEnabled(false);
+		  }    
+	  	}  
 
 	  class PlayAnimation implements Runnable{
 	    public void run() {
-	      go();    	
+	      go();      
 	    }    
+	  }  
+
+	  /**
+	   * Écoute les menus Forme
+	   * @author CHerby
+	   */
+	  class FormeListener implements ActionListener{
+	    public void actionPerformed(ActionEvent e) {
+	      pan.setForme(((JRadioButtonMenuItem)e.getSource()).getText());
+	      System.out.println("Forme");
+	    }
 	  }
-    
-  class FormeListener implements ActionListener{
-    public void actionPerformed(ActionEvent e) {
-      pan.setForme(combo.getSelectedItem().toString());
-    }    
-  }
-    
-  class MorphListener implements ActionListener{
-    public void actionPerformed(ActionEvent e) {
-      //Si la case est cochée, on active le mode morphing
-      if(morph.isSelected())pan.setMorph(true);
-      //Sinon, on ne fait rien
-      else pan.setMorph(false);
-    }
-  }    
-}
+
+	  /**
+	   * Écoute le menu Morphing
+	   * @author CHerby
+	   */
+	  class MorphListener implements ActionListener{
+	    public void actionPerformed(ActionEvent e) {
+	      //Si la case est cochée, activation du mode morphing
+	      if(morph.isSelected()) pan.setMorph(true);
+	      //Sinon rien !
+	      else pan.setMorph(false);
+	    }    
+	  }  
+	} 
+	
 
 public class App {
   public static void main(String[] args){
